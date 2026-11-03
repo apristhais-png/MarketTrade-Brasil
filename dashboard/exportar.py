@@ -22,19 +22,27 @@ NCM_URL = "https://balanca.mdic.gov.br/balanca/bd/tabelas/NCM.csv"
 SAIDA = Path(__file__).resolve().parent / "data"
 
 
+def _ler_ncm(p: str, encoding: str) -> str:
+    # A tabela NCM oficial tem aspas internas não escapadas (ex.: 'de 45" ...').
+    # strict_mode=false aceita essas linhas; ignore_errors=false garante que nenhuma
+    # linha seja descartada silenciosamente (qualquer outro erro continua falhando).
+    return (f"read_csv('{p}', delim=';', header=true, quote='\"', encoding='{encoding}', "
+            "all_varchar=true, strict_mode=false, ignore_errors=false)")
+
+
 def carregar_ncm(con, caminho_csv: Path, encoding: str = "latin-1") -> None:
     p = str(caminho_csv).replace("'", "''")
     cols = [d[0] for d in con.execute(
-        f"SELECT * FROM read_csv('{p}', delim=';', header=true, encoding='{encoding}', "
-        "all_varchar=true) LIMIT 0").description]
+        f"SELECT * FROM {_ler_ncm(p, encoding)} LIMIT 0").description]
     faltando = {"CO_NCM", "NO_NCM_POR"} - set(cols)
     if faltando:
         raise ValueError(f"tabela NCM sem colunas {sorted(faltando)}")
     con.execute(f"""
         CREATE OR REPLACE TEMP TABLE ncm_desc AS
-        SELECT DISTINCT LPAD(TRIM(CO_NCM), 8, '0') AS ncm, TRIM(NO_NCM_POR) AS descricao_ncm
-        FROM read_csv('{p}', delim=';', header=true, encoding='{encoding}', all_varchar=true)
-    """)
+        SELECT LPAD(TRIM(CO_NCM), 8, '0') AS ncm, min(TRIM(NO_NCM_POR)) AS descricao_ncm
+        FROM {_ler_ncm(p, encoding)}
+        GROUP BY 1
+    """)  # uma descrição por NCM: o LEFT JOIN não duplica produtos
 
 
 def exportar(con, saida: Path = SAIDA) -> dict:

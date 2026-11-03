@@ -94,3 +94,32 @@ def test_app_sem_dados_mostra_erro(monkeypatch, tmp_path):
     at = _app(monkeypatch, tmp_path / "vazio")
     assert not at.exception
     assert "indisponíveis" in at.error[0].value
+
+
+def test_ncm_com_aspas_internas_nao_escapadas(tmp_path):
+    con = conectar(tmp_path / "c.duckdb")
+    con.executemany("INSERT INTO comercio_exterior VALUES (?, ?, ?, ?, ?, ?)", [
+        (2019, 1, "SP", "84713012", "EXPORTACAO", 500),
+        (2019, 1, "SP", "01010101", "EXPORTACAO", 300),
+        (2019, 1, "SP", "00000123", "EXPORTACAO", 100),
+    ])
+    linhas = ["CO_NCM;CO_UNID;NO_NCM_POR"]
+    linhas += [f'"{i:08d}";10;"Produto fictício {i}"' for i in range(1000, 6100)]  # > linha 5043
+    linhas += ['"84713012";11;"Monitor fictício de 45" polegadas, tela plana"',
+               '"01010101";10;"Produto fictício A"',
+               '"00000123";10;"Produto fictício B"',
+               '"00000123";10;"Produto fictício B"']  # linha repetida na tabela
+    f = tmp_path / "NCM.csv"
+    f.write_text("\n".join(linhas) + "\n", encoding="latin-1")
+
+    exportar.carregar_ncm(con, f)
+    # nenhuma linha descartada: 5100 + 3 NCMs distintos
+    assert con.execute("SELECT count(*) FROM ncm_desc").fetchone()[0] == 5103
+    assert con.execute("SELECT descricao_ncm FROM ncm_desc WHERE ncm = '84713012'").fetchone()[0] \
+        == 'Monitor fictício de 45" polegadas, tela plana'
+
+    exportar.exportar(con, tmp_path / "pub")
+    df = pd.read_parquet(tmp_path / "pub" / "01_top3_exportados_uf_ano.parquet")
+    assert list(df.ncm) == ["84713012", "01010101", "00000123"]  # sem duplicar, ordem mantida
+    assert list(df.descricao_ncm) == ['Monitor fictício de 45" polegadas, tela plana',
+                                      "Produto fictício A", "Produto fictício B"]
