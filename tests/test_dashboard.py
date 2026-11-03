@@ -87,7 +87,8 @@ def test_app_renderiza_5_abas(monkeypatch, publicado):
     at = _app(monkeypatch, publicado)
     assert not at.exception
     assert len(at.tabs) == 5
-    assert len(at.sidebar.multiselect) == 3
+    # rankings: seletores simples de UF e ano/mês (3 abas x 2 selectbox)
+    assert len(at.selectbox) == 6
 
 
 def test_app_sem_dados_mostra_erro(monkeypatch, tmp_path):
