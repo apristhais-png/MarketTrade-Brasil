@@ -98,3 +98,38 @@ da federação (por exemplo `ND`, UF não declarada, e outros como `EX`, `ZN`, `
 - **Participação (análises 4–5):** o denominador é o total nacional **completo**, com os códigos
   especiais incluídos, para bater com o total oficial. Eles aparecem somados em uma única linha
   `UF_ESPECIAL`, e a soma das participações dá 100%.
+
+## Dashboard (Tarefa 3)
+
+Dashboard Streamlit + Plotly com as 5 análises SQL, uma por aba, e filtros de UF, ano e mês na
+barra lateral. Cada produto aparece com o código NCM (8 dígitos) e a descrição oficial
+(`NO_NCM_POR`) da tabela NCM do MDIC (`https://balanca.mdic.gov.br/balanca/bd/tabelas/NCM.csv`).
+Um NCM ausente da tabela aparece como "(descrição não encontrada na tabela NCM)", nunca com texto inventado.
+
+### Como os dados chegam ao dashboard
+O banco `data/comex.duckdb` e os CSVs anuais não vão para o GitHub. O dashboard lê só os
+**resultados agregados** das 5 análises, em `dashboard/data/*.parquet`: alguns milhares de linhas,
+poucos KB. Esses arquivos são gerados localmente a partir do banco real e versionados:
+
+```bash
+python -m pipeline.run
+```
+```bash
+python -m dashboard.exportar --db data/comex.duckdb
+```
+```bash
+git add dashboard/data/*.parquet && git commit -m "Atualiza dados do dashboard"
+```
+Se os arquivos não existirem ou estiverem corrompidos, o app mostra uma mensagem de erro com
+o comando acima, em vez de exibir dados.
+
+### Rodar localmente
+```bash
+streamlit run dashboard/app.py
+```
+
+### Publicar no Streamlit Community Cloud
+1. Gere e faça commit de `dashboard/data/*.parquet` (passos acima) e envie para o GitHub.
+2. Em https://share.streamlit.io, clique em **Create app** e escolha este repositório e o branch `main`.
+3. Em **Main file path**, informe `dashboard/app.py`. As dependências vêm de `requirements.txt`.
+4. Faça o deploy. O Cloud não baixa nenhum CSV do MDIC; ele só lê os Parquets do repositório.

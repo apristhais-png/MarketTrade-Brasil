@@ -4,3 +4,6 @@ data/
 __pycache__/
 .pytest_cache/
 reports/
+# resultados agregados publicados pelo dashboard (pequenos, versionáveis)
+!dashboard/data/
+!dashboard/data/*.parquet
