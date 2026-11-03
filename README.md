@@ -19,7 +19,7 @@ Apenas os arquivos **anuais** detalhados por NCM (a base histórica `*_COMPLETA`
 | 2018 | `.../ncm/EXP_2018.csv` | `.../ncm/IMP_2018.csv` |
 | 2019 | `.../ncm/EXP_2019.csv` | `.../ncm/IMP_2019.csv` |
 
-Base: `https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm` (configurável com `--base-url`,
+Base: `https://balanca.mdic.gov.br/balanca/bd/comexstat-bd/ncm` (configurável com `--base-url`,
 definida em `pipeline/sources.py`). Formato: CSV separado por `;`, cabeçalho, encoding latin-1
 (configurável com `--encoding`).
 
@@ -59,7 +59,7 @@ check de qualidade falhar.
 
 ### Validações (relatório de qualidade)
 Na carga: colunas obrigatórias presentes, nenhum nulo/valor não numérico, ano do arquivo = ano esperado.
-Após a carga: esquema da tabela, nulos, mês 1–12, anos esperados, FOB não negativo, NCM com 8 dígitos,
+Após a carga: esquema da tabela, nulos, mês 1–12, anos (todo período no banco precisa ter arquivo de origem registrado em `controle_cargas` e os anos pedidos em `--anos` precisam estar carregados — outros períodos já presentes no banco não geram falha), FOB não negativo, NCM com 8 dígitos,
 UF válida, tipo de operação, ausência de chaves duplicadas e **total FOB de origem = total no DuckDB**
 por arquivo, além dos totais por ano/operação.
 

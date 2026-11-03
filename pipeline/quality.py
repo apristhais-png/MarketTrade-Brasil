@@ -33,10 +33,20 @@ def validar(con, anos=None) -> dict:
     meses = _um(con, "SELECT count(*) FROM comercio_exterior WHERE mes NOT BETWEEN 1 AND 12")
     add("datas_mes_1_12", meses == 0, f"{meses} linhas com mês inválido")
 
+    # Anos válidos = períodos efetivamente carregados (controle_cargas), não só os
+    # anos desta execução: o banco pode conter outros períodos de cargas anteriores.
+    orfaos = con.execute("""
+        SELECT DISTINCT t.ano, t.tipo_operacao FROM comercio_exterior t
+        ANTI JOIN controle_cargas c USING (ano, tipo_operacao) ORDER BY 1, 2
+    """).fetchall()
+    add("datas_ano_esperado", not orfaos,
+        f"períodos sem arquivo de origem registrado: {orfaos}" if orfaos else "ok")
     if anos:
-        fora = _um(con, f"SELECT count(*) FROM comercio_exterior WHERE ano NOT IN "
-                        f"({','.join(map(str, anos))})")
-        add("datas_ano_esperado", fora == 0, f"{fora} linhas fora de {list(anos)}")
+        carregados = {r[0] for r in con.execute(
+            "SELECT DISTINCT ano FROM controle_cargas").fetchall()}
+        faltando = sorted(set(anos) - carregados)
+        add("anos_solicitados_carregados", not faltando,
+            f"anos solicitados sem carga: {faltando}" if faltando else sorted(anos))
 
     neg = _um(con, "SELECT count(*) FROM comercio_exterior WHERE valor_fob_usd < 0")
     add("valores_nao_negativos", neg == 0, f"{neg} linhas com FOB negativo")

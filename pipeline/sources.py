@@ -7,7 +7,7 @@ Somente os arquivos anuais EXP_<ano>.csv / IMP_<ano>.csv são usados; a base
 histórica completa (EXP_COMPLETA / IMP_COMPLETA) nunca é baixada.
 """
 
-BASE_URL = "https://balanca.economia.gov.br/balanca/bd/comexstat-bd/ncm"
+BASE_URL = "https://balanca.mdic.gov.br/balanca/bd/comexstat-bd/ncm"
 ANOS = (2017, 2018, 2019)
 TIPOS = {"EXP": "EXPORTACAO", "IMP": "IMPORTACAO"}
 
