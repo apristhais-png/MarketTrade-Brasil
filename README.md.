@@ -1,0 +1,7 @@
+
+Projeto de Engenharia de Dados para análise das importações
+e exportações brasileiras de 2017 a 2019.
+
+Tecnologias: Python, DuckDB, SQL e Streamlit.
+
+Fonte: dados oficiais do comércio exterior brasileiro.
