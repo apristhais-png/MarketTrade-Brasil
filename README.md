@@ -68,3 +68,33 @@ por arquivo, além dos totais por ano/operação.
 python -m pytest -q
 ```
 Usam CSVs minúsculos e um servidor HTTP local (sem acesso à internet).
+
+## Análises SQL (Tarefa 2)
+
+Consultas em `sql/`, executadas sobre a tabela `comercio_exterior` do banco gerado pelo pipeline:
+
+| Arquivo | Análise |
+|---|---|
+| `01_top3_exportados_uf_ano.sql` | Top 3 NCMs exportados por UF em 2017, 2018 e 2019 |
+| `02_top3_importados_uf_ano.sql` | Top 3 NCMs importados por UF em 2017, 2018 e 2019 |
+| `03_top3_exportados_uf_mes_2019.sql` | Top 3 NCMs exportados por UF e mês em 2019 |
+| `04_participacao_uf_exportacao_2019.sql` | % de cada UF no total nacional exportado em 2019 |
+| `05_participacao_uf_importacao_2019.sql` | % de cada UF no total nacional importado em 2019 |
+
+```bash
+python -m pipeline.analises --db data/comex.duckdb --saida reports/analises
+```
+Gera um CSV (`;`) por análise em `reports/analises/` (não versionado).
+
+**Critérios**
+- Produto = código NCM, mantido como texto de 8 dígitos (zeros à esquerda preservados).
+- Ordenação pela soma de `valor_fob_usd` (FOB em US$); em caso de empate, vence o menor NCM.
+  Assim o resultado tem exatamente até 3 linhas por grupo e é determinístico.
+
+**UFs especiais.** Os arquivos da SECEX trazem, em `SG_UF_NCM`, códigos que não são unidades
+da federação (por exemplo `ND`, UF não declarada, e outros como `EX`, `ZN`, `RE`, `MN`, `CB`,
+`ZZ`). A lista das 27 UFs oficiais fica em `sql/00_ufs.sql`. Tratamento:
+- **Rankings (análises 1–3):** os códigos especiais ficam de fora, porque não representam um estado.
+- **Participação (análises 4–5):** o denominador é o total nacional **completo**, com os códigos
+  especiais incluídos, para bater com o total oficial. Eles aparecem somados em uma única linha
+  `UF_ESPECIAL`, e a soma das participações dá 100%.
