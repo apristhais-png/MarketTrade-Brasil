@@ -94,7 +94,8 @@ def test_app_renderiza_5_abas(monkeypatch, publicado):
 def test_app_sem_dados_mostra_erro(monkeypatch, tmp_path):
     at = _app(monkeypatch, tmp_path / "vazio")
     assert not at.exception
-    assert "indisponíveis" in at.error[0].value
+    assert "Não foi possível carregar os dados" in at.error[0].value
+    assert "dashboard.exportar" in at.error[0].value
 
 
 def test_ncm_com_aspas_internas_nao_escapadas(tmp_path):
