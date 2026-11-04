@@ -2,6 +2,7 @@
 
 São puladas automaticamente no CI e em qualquer máquina sem o banco.
 """
+from decimal import Decimal
 from pathlib import Path
 
 import duckdb
@@ -35,8 +36,21 @@ def test_parquet_publicado_igual_ao_sql(con, nome):
     pub = pd.read_parquet(PASTA / f"{nome}.parquet")[cols]
     assert len(sql) == len(pub)
     for c in cols:
-        a, b = sql[c].reset_index(drop=True), pub[c].reset_index(drop=True)
+        a, b = list(sql[c]), list(pub[c])
         if c in ("uf", "ncm"):
-            assert (a.astype(str) == b.astype(str)).all(), c
-        else:  # HUGEINT/DECIMAL no DuckDB x float/int no Parquet
-            assert (a.astype(float) - b.astype(float)).abs().max() <= 1e-6, c
+            assert [str(x) for x in a] == [str(x) for x in b], c
+        elif c == "participacao_pct":
+            # única coluna com tolerância: arredondada a 4 casas no SQL (DECIMAL)
+            dif = max(abs(Decimal(str(x)) - Decimal(str(y))) for x, y in zip(a, b))
+            assert dif <= Decimal("0.00005"), (c, dif)
+        else:
+            # ano, mes, ranking, valor_fob_usd, total_nacional_fob_usd: igualdade exata em inteiros.
+            # O Parquet pode guardar FOB como float64; só é aceito se for inteiro exato.
+            assert [_inteiro(x) for x in a] == [_inteiro(y) for y in b], c
+
+
+def _inteiro(v):
+    """Converte para int sem perda; falha se o valor tiver parte fracionária."""
+    d = Decimal(str(v))
+    assert d == d.to_integral_value(), f"valor não inteiro: {v!r}"
+    return int(d)
