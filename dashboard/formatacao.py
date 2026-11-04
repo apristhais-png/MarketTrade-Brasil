@@ -1,11 +1,12 @@
 """Formatação de textos e valores para o dashboard (sem dependência do Streamlit)."""
 import pandas as pd
 
-MARINHO, PETROLEO, AZUL, FUNDO, VERDE = "#14263E", "#183E63", "#3284AE", "#F7F9FC", "#2E9E6B"
-CORES_RANKING = {1: MARINHO, 2: AZUL, 3: "#9CC9DF"}
-COR_UF = AZUL
-COR_UF_DEMAIS = "#C3D3E3"
-COR_UF_ESPECIAL = "#B5BCC6"
+MARINHO, PETROLEO, VERDE, FUNDO = "#10253F", "#167E91", "#85DBC4", "#F5F7FB"
+TEXTO_SUAVE = "#4E5D70"  # contraste AA sobre branco e sobre o fundo
+CORES_RANKING = {1: MARINHO, 2: PETROLEO, 3: VERDE}
+COR_UF = PETROLEO
+COR_UF_DEMAIS = "#B9D6DC"
+COR_UF_ESPECIAL = "#B8C0CC"
 MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto",
          "Setembro", "Outubro", "Novembro", "Dezembro"]
 
