@@ -1,12 +1,47 @@
 # MarketTrade Brasil
 
-Projeto de Engenharia de Dados para análise das importações
-e exportações brasileiras de 2017 a 2019.
+[![tests](https://github.com/apristhais-png/MarketTrade-Brasil/actions/workflows/tests.yml/badge.svg)](https://github.com/apristhais-png/MarketTrade-Brasil/actions/workflows/tests.yml)
 
-Tecnologias: Python, DuckDB, SQL e Streamlit.
+Projeto de Engenharia de Dados sobre as exportações e importações brasileiras de **2017 a 2019**,
+por UF e produto (NCM). A fonte são os dados oficiais do
+[MDIC/SECEX – Base de dados bruta](https://www.gov.br/mdic/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta).
 
-Fonte: dados oficiais do comércio exterior brasileiro
-([MDIC – Base de dados bruta](https://www.gov.br/mdic/pt-br/assuntos/comercio-exterior/estatisticas/base-de-dados-bruta)).
+**Dashboard público:** https://markettrade-brasil-syxggiuacldn9jbkp8zdxk.streamlit.app/
+
+**Tecnologias:** Python · DuckDB · SQL · Parquet · Streamlit · Plotly · pytest · GitHub Actions
+
+## Arquitetura resumida
+
+```
+MDIC/SECEX (6 CSVs anuais) → download + validação → DuckDB (comercio_exterior, controle_cargas)
+  → 5 consultas SQL → Parquets agregados + descrições NCM → dashboard Streamlit
+```
+
+- [docs/ARQUITETURA.md](docs/ARQUITETURA.md): fluxo (Mermaid), granularidade, armazenamento, idempotência e decisões.
+- [docs/VALIDACAO.md](docs/VALIDACAO.md): regras de qualidade, reconciliação origem × DuckDB, UFs especiais e limitações.
+
+## Início rápido
+
+```bash
+pip install -r requirements.txt
+```
+```bash
+pytest -q
+```
+```bash
+streamlit run dashboard/app.py
+```
+O dashboard funciona direto com os Parquets versionados em `dashboard/data/`. Para refazer tudo a
+partir do MDIC, veja as seções abaixo: `pipeline.run`, depois `dashboard.exportar`.
+
+Para revalidar um banco local já carregado, sem baixar nada de novo:
+```bash
+python -m pipeline.validar --db data/comex.duckdb
+```
+
+**CI:** a cada push ou PR para `main`, o GitHub Actions roda `pytest -q` (Python 3.12). Entram os testes
+sintéticos e a verificação dos Parquets publicados. O CI não acessa o MDIC e não precisa do banco
+completo; os testes que dependem de `data/comex.duckdb` são pulados.
 
 ## Pipeline (Python + DuckDB)
 
@@ -67,7 +102,8 @@ por arquivo, além dos totais por ano/operação.
 ```bash
 python -m pytest -q
 ```
-Usam CSVs minúsculos e um servidor HTTP local (sem acesso à internet).
+Usam CSVs minúsculos e um servidor HTTP local (sem acesso à internet). Os três níveis de teste
+(sintéticos, dados publicados e banco local) estão descritos em [docs/VALIDACAO.md](docs/VALIDACAO.md).
 
 ## Análises SQL (Tarefa 2)
 
